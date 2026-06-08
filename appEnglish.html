@@ -338,42 +338,6 @@
     color: var(--accent5);
   }
 
-  .example-area {
-    margin-top: 20px;
-    background: var(--surface2);
-    border-radius: var(--radius);
-    padding: 16px;
-    font-size: 0.9rem;
-    color: var(--text2);
-    line-height: 1.6;
-    text-align: left;
-    direction: ltr;
-    display: none;
-  }
-
-  .example-area.visible { display: block; }
-
-  .example-area .loading-dots {
-    display: inline-flex;
-    gap: 4px;
-    align-items: center;
-  }
-
-  .loading-dots span {
-    width: 6px; height: 6px;
-    background: var(--accent);
-    border-radius: 50%;
-    animation: bounce 1.2s infinite;
-  }
-
-  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-  @keyframes bounce {
-    0%, 60%, 100% { transform: translateY(0); }
-    30% { transform: translateY(-6px); }
-  }
-
   /* Action buttons */
   .actions-grid {
     display: grid;
@@ -404,7 +368,7 @@
 
   .action-btn .emoji { font-size: 1.5rem; }
 
-  .action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
   .action-btn:active { transform: translateY(0); }
 
   .btn-know {
@@ -449,7 +413,7 @@
 
   .btn-add:hover { background: rgba(26,158,63,0.18); border-color: var(--accent2); }
 
-  /* עיצוב כפתור משפט לדוגמה */
+  /* כפתור משפט לדוגמה */
   .btn-example {
     background: rgba(180,83,9,0.08);
     border-color: rgba(180,83,9,0.3);
@@ -556,7 +520,8 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.45);
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
     z-index: 500;
     align-items: center;
     justify-content: center;
@@ -571,13 +536,13 @@
     border-radius: 20px;
     padding: 28px 24px;
     width: 100%;
-    max-width: 400px;
+    max-width: 440px;
     box-shadow: var(--shadow);
     animation: cardIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   .modal-card h3 {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 800;
     margin-bottom: 20px;
     display: flex;
@@ -627,6 +592,45 @@
   }
 
   .btn-cancel:hover { background: var(--border); }
+
+  /* ── EXAMPLE POPUP MODAL ── */
+  .example-content-area {
+    text-align: left;
+    direction: ltr;
+    margin: 16px 0;
+    padding: 20px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    border: 1px dashed var(--border);
+  }
+
+  .example-en-text {
+    font-family: 'Heebo', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .example-he-text {
+    font-family: 'Heebo', sans-serif;
+    font-size: 1rem;
+    color: var(--accent5);
+    font-weight: 500;
+    direction: rtl;
+    text-align: right;
+  }
+
+  .example-modal-footer {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+  }
+
+  .example-modal-footer button {
+    flex: 1;
+  }
 
   /* ── TOAST ── */
   .toast {
@@ -760,8 +764,6 @@
           <hr class="meaning-divider">
           <div class="word-he" id="word-he"></div>
         </div>
-
-        <div class="example-area" id="example-area"></div>
       </div>
 
       <!-- Action Buttons -->
@@ -778,7 +780,7 @@
           <span class="emoji" id="meaning-emoji">📖</span>
           <span id="meaning-btn-text">הצג פירוש</span>
         </button>
-        <button class="action-btn btn-example" onclick="toggleExample()">
+        <button class="action-btn btn-example" onclick="openExampleModal()">
           <span class="emoji">💡</span>
           <span>משפט לדוגמה</span>
         </button>
@@ -794,7 +796,6 @@
           <span class="emoji">↩️</span>
           <span>חזור</span>
         </button>
-
       </div>
     </div>
   </div>
@@ -852,6 +853,29 @@
     </div>
   </div>
 
+  <!-- EXAMPLE POPUP MODAL -->
+  <div class="modal-overlay" id="example-modal" onclick="handleExampleOverlayClick(event)">
+    <div class="modal-card">
+      <h3 style="color: var(--accent4);">💡 משפט לדוגמה</h3>
+      <div class="example-content-area" id="example-loading-box">
+        <div style="text-align: center; font-family: 'Heebo', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; direction: rtl;">
+          <span>מחפש משפט לדוגמה באינטרנט...</span>
+          <div class="loading-dots"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+      <div id="example-result-box" style="display: none;">
+        <div class="example-content-area">
+          <div class="example-en-text" id="popup-example-en">—</div>
+          <div class="example-he-text" id="popup-example-he">—</div>
+        </div>
+      </div>
+      <div class="example-modal-footer">
+        <button class="btn-cancel" onclick="closeExampleModal()">סגור</button>
+        <button class="btn-primary" id="popup-speak-btn" onclick="speakExampleSentence()" style="background: linear-gradient(135deg, var(--accent), var(--accent2));" disabled>🔊 השמע</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 </div>
@@ -865,10 +889,10 @@ let knowSet = new Set();
 let dontKnowSet = new Set();
 let history = [];
 let meaningVisible = false;
-let exampleVisible = false;
 let isSavingMode = false;
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwfCp0uMjXU3yXKWb4-YbZC-BkMy8zpiNnPG0UyHKPxJ4Xbd9QDIxAIJBAhwNxO3LTk/exec';
+const apiKey = ""; // Gemini API Key (מטופל אוטומטית על ידי סביבת הריצה)
 
 // ── DEMO DATA ──
 const DEMO_WORDS = [
@@ -958,7 +982,6 @@ function renderWord() {
 
   // Reset toggles
   hideMeaning();
-  hideExample();
 
   // Update stats
   updateStats();
@@ -1041,48 +1064,6 @@ function hideMeaning() {
   document.getElementById('meaning-emoji').textContent = '📖';
 }
 
-function hideExample() {
-  exampleVisible = false;
-  const ea = document.getElementById('example-area');
-  ea.classList.remove('visible');
-  ea.innerHTML = '';
-}
-
-async function toggleExample() {
-  const ea = document.getElementById('example-area');
-  const word = document.getElementById('word-en').textContent;
-  
-  if (!word || word === '—') return;
-
-  if (exampleVisible) {
-    hideExample();
-    return;
-  }
-
-  exampleVisible = true;
-  ea.classList.add('visible');
-  ea.innerHTML = `
-    <div style="text-align: center; font-family: 'Heebo', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px;">
-      <span>מחפש משפט לדוגמה...</span>
-      <div class="loading-dots"><span></span><span></span><span></span></div>
-    </div>
-  `;
-
-  try {
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=getExample&word=${encodeURIComponent(word)}`);
-    const data = await res.json();
-    
-    if (data.sentence) {
-      ea.innerHTML = `<strong>Example:</strong><br>${data.sentence}`;
-    } else {
-      ea.innerHTML = `❌ לא נמצא משפט לדוגמה עבור מילה זו.`;
-    }
-  } catch (err) {
-    ea.innerHTML = `❌ שגיאה בחיפוש המשפט.`;
-    console.error(err);
-  }
-}
-
 function speakWord() {
   const word = document.getElementById('word-en').textContent;
   if (!word || word === '—') return;
@@ -1092,6 +1073,115 @@ function speakWord() {
   speechSynthesis.cancel();
   speechSynthesis.speak(utter);
   showToast('🔊 משמיע: ' + word);
+}
+
+// ── EXAMPLES WITH GEMINI + GROUNDED SEARCH ──
+async function fetchGroundedExample(wordEn, wordHe) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+  
+  const systemPrompt = "You are an expert bilingual English-Hebrew compiler. Your task is to find and provide a natural, clean, simple English example sentence that showcases the word. Use Google Search grounding to make sure the sentence is real, idiomatic, and directly aligns with the provided Hebrew translation meaning.";
+  
+  const userQuery = `Find a single realistic English example sentence using the word "${wordEn}", where its meaning corresponds to "${wordHe}".
+Provide the response in structured JSON format.
+Example structure:
+{
+  "english": "She gave an eloquent speech that moved everyone in the room.",
+  "hebrew": "היא נשאה נאום רהוט שריגש את כל הנוכחים בחדר."
+}`;
+
+  const payload = {
+    contents: [{ parts: [{ text: userQuery }] }],
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    generationConfig: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "OBJECT",
+        properties: {
+          english: { type: "STRING" },
+          hebrew: { type: "STRING" }
+        },
+        required: ["english", "hebrew"]
+      }
+    },
+    tools: [{ "google_search": {} }]
+  };
+
+  let delay = 1000;
+  for (let i = 0; i < 5; i++) {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`Status ${res.status}`);
+      const data = await res.json();
+      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (rawText) {
+        return JSON.parse(rawText);
+      }
+      throw new Error("No payload found");
+    } catch (e) {
+      if (i === 4) throw e;
+      await new Promise(resolve => setTimeout(resolve, delay));
+      delay *= 2;
+    }
+  }
+}
+
+async function openExampleModal() {
+  const wordEn = document.getElementById('word-en').textContent;
+  const wordHe = document.getElementById('word-he').textContent;
+
+  if (!wordEn || wordEn === '—') return;
+
+  // Open the modal and set state to loading
+  const modal = document.getElementById('example-modal');
+  modal.classList.add('open');
+
+  const loadingBox = document.getElementById('example-loading-box');
+  const resultBox = document.getElementById('example-result-box');
+  const speakBtn = document.getElementById('popup-speak-btn');
+
+  loadingBox.style.display = 'block';
+  resultBox.style.display = 'none';
+  speakBtn.disabled = true;
+
+  try {
+    const data = await fetchGroundedExample(wordEn, wordHe);
+    
+    document.getElementById('popup-example-en').textContent = data.english;
+    document.getElementById('popup-example-he').textContent = data.hebrew;
+
+    loadingBox.style.display = 'none';
+    resultBox.style.display = 'block';
+    speakBtn.disabled = false;
+  } catch (err) {
+    console.error(err);
+    loadingBox.innerHTML = `
+      <div style="text-align: center; color: var(--accent3); font-weight: 500;">
+        ❌ לא הצלחנו למצוא משפט לדוגמה ברשת. אנא נסה שנית.
+      </div>
+    `;
+  }
+}
+
+function closeExampleModal() {
+  document.getElementById('example-modal').classList.remove('open');
+}
+
+function handleExampleOverlayClick(e) {
+  if (e.target === document.getElementById('example-modal')) closeExampleModal();
+}
+
+function speakExampleSentence() {
+  const text = document.getElementById('popup-example-en').textContent;
+  if (!text || text === '—') return;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  utter.rate = 0.85;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
 }
 
 // ── ADD WORD MODAL ──
@@ -1140,8 +1230,6 @@ async function submitAddWord() {
     showToast('✅ המילה "' + en + '" נוספה (מצב דמו — לא נשמר)');
   }
 }
-
-
 
 // ── GOOGLE SHEETS SAVE ──
 async function saveUnknownWord(wordObj) {
@@ -1237,7 +1325,10 @@ document.addEventListener('click', function(e) {
 showScreen('setup');
 
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeAddModal();
+  if (e.key === 'Escape') {
+    closeAddModal();
+    closeExampleModal();
+  }
   if (e.key === 'Enter' && document.getElementById('add-modal').classList.contains('open')) {
     submitAddWord();
   }
