@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="he" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מגלה מילים</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=Frank+Ruhl+Libre:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1008;
+    --paper: #f5f0e8;
+    --accent: #c0392b;
+    --gold: #b8860b;
+    --muted: #7a6a55;
+    --pop-bg: #1a1008;
+    --pop-text: #f5f0e8;
+    --selection-bg: #ffe082;
+    --selection-border: #f9a825;
+  }
+
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  header {
+    padding: 2.5rem 2rem 1rem;
+    text-align: center;
+    border-bottom: 2px solid var(--ink);
+  }
+
+  header h1 {
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    direction: rtl;
+  }
+
+  header h1 span { color: var(--accent); }
+
+  header p {
+    margin-top: 0.5rem;
+    font-size: 0.95rem;
+    color: var(--muted);
+    font-weight: 300;
+    direction: rtl;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* INPUT */
+  #input-section {
+    max-width: 720px;
+    margin: 3rem auto;
+    padding: 0 1.5rem;
+    animation: fadeUp 0.6s ease both;
+    direction: rtl;
+  }
+
+  .input-card {
+    background: white;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    box-shadow: 6px 6px 0 var(--ink);
+    padding: 2rem;
+  }
+
+  .input-card label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 140px;
+    border: 1.5px solid #ccc;
+    border-radius: 2px;
+    padding: 1rem;
+    font-family: 'Heebo', sans-serif;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    resize: vertical;
+    background: var(--paper);
+    color: var(--ink);
+    transition: border-color 0.2s;
+    direction: rtl;
+    text-align: right;
+  }
+
+  textarea:focus { outline: none; border-color: var(--accent); background: white; }
+
+  .btn-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    justify-content: flex-start;
+  }
+
+  button.primary {
+    background: var(--ink);
+    color: var(--paper);
+    border: 2px solid var(--ink);
+    padding: 0.7rem 1.8rem;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    box-shadow: 3px 3px 0 var(--accent);
+  }
+
+  button.primary:hover { background: var(--accent); border-color: var(--accent); box-shadow: 3px 3px 0 var(--ink); }
+  button.primary:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+
+  /* DISPLAY */
+  #display-section {
+    max-width: 800px;
+    margin: 0 auto 4rem;
+    padding: 0 1.5rem;
+    display: none;
+    animation: fadeUp 0.5s ease both;
+    direction: rtl;
+  }
+
+  .display-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .display-meta span {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .display-meta .line { flex: 1; height: 1px; background: var(--ink); opacity: 0.2; }
+
+  .hint-bar {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.6rem 1.2rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    direction: rtl;
+  }
+
+  /* TEXT CANVAS — LTR container, RTL text flow via unicode-bidi */
+  #text-canvas {
+    background: white;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    box-shadow: 6px 6px 0 var(--ink);
+    padding: 2.5rem 2rem;
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: clamp(1.15rem, 2.5vw, 1.4rem);
+    line-height: 2.2;
+    /* left-to-right container, text aligns left */
+    direction: ltr;
+    text-align: left;
+    /* But we want RTL text to flow RTL naturally */
+    unicode-bidi: plaintext;
+  }
+
+  /* Each paragraph/line wraps in a div that uses plaintext bidi */
+  .text-line {
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: plaintext;
+    display: block;
+    margin-bottom: 0.1em;
+  }
+
+  .word {
+    display: inline;
+    cursor: pointer;
+    border-radius: 2px;
+    padding: 1px 2px;
+    transition: background 0.12s, color 0.12s;
+    position: relative;
+    user-select: none;
+  }
+
+  .word:hover { background: rgba(192,57,43,0.12); }
+
+  .word.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 2px;
+  }
+
+  /* Highlighted selection */
+  .word.highlighted {
+    background: var(--selection-bg);
+    color: var(--ink);
+    border-radius: 0;
+  }
+
+  .word.highlighted.sel-start { border-radius: 3px 0 0 3px; padding-right: 0; }
+  .word.highlighted.sel-end   { border-radius: 0 3px 3px 0; padding-left: 0; }
+  .word.highlighted.sel-single { border-radius: 3px; }
+
+  .punct { display: inline; }
+
+  /* SELECTION TOOLBAR */
+  #sel-toolbar {
+    position: fixed;
+    z-index: 1001;
+    display: none;
+    background: #2d2d2d;
+    border-radius: 6px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.4);
+    overflow: hidden;
+    animation: popIn 0.18s cubic-bezier(.34,1.56,.64,1) both;
+    transform-origin: bottom center;
+  }
+
+  #sel-toolbar .sel-selected-text {
+    background: #f9a825;
+    color: #1a1008;
+    padding: 0.4rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: center;
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    direction: rtl;
+  }
+
+  #sel-toolbar .sel-actions {
+    display: flex;
+  }
+
+  #sel-toolbar .sel-actions button {
+    flex: 1;
+    background: transparent;
+    color: #f5f0e8;
+    border: none;
+    padding: 0.6rem 0.7rem;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: background 0.12s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    white-space: nowrap;
+    min-width: 64px;
+  }
+
+  #sel-toolbar .sel-actions button .si { font-size: 1.1rem; }
+  #sel-toolbar .sel-actions button:hover { background: rgba(255,255,255,0.1); }
+  #sel-toolbar .sel-actions button:not(:last-child) { border-left: 1px solid rgba(255,255,255,0.1); }
+
+  /* POPUP (single word) */
+  #popup {
+    position: fixed;
+    z-index: 1000;
+    display: none;
+    width: 300px;
+    background: var(--pop-bg);
+    color: var(--pop-text);
+    border-radius: 4px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.08);
+    overflow: hidden;
+    animation: popIn 0.2s cubic-bezier(.34,1.56,.64,1) both;
+    transform-origin: bottom center;
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.88) translateY(8px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  #popup::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: var(--pop-bg);
+    border-bottom: none;
+  }
+
+  .popup-word {
+    background: var(--accent);
+    padding: 0.6rem 1rem;
+    font-family: 'Frank Ruhl Libre', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    text-align: center;
+    direction: rtl;
+  }
+
+  .popup-actions {
+    display: flex;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .popup-actions button {
+    flex: 1;
+    background: transparent;
+    color: var(--pop-text);
+    border: none;
+    padding: 0.7rem 0.5rem;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: background 0.15s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .popup-actions button .act-icon { font-size: 1.2rem; }
+  .popup-actions button:hover { background: rgba(255,255,255,0.1); }
+  .popup-actions button:not(:last-child) { border-left: 1px solid rgba(255,255,255,0.1); }
+
+  #def-area {
+    padding: 0.9rem 1rem;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    min-height: 48px;
+    color: rgba(245,240,232,0.88);
+    display: none;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    direction: rtl;
+    text-align: right;
+  }
+
+  #def-area.loading { opacity: 0.6; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-left: 0.4rem;
+  }
+
+  #popup-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    background: transparent;
+    border: none;
+    color: rgba(245,240,232,0.5);
+    font-size: 1rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 2px 5px;
+    border-radius: 2px;
+    z-index: 2;
+  }
+  #popup-close:hover { color: white; background: rgba(255,255,255,0.1); }
+
+  @keyframes pulse-ring {
+    0%   { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.7); opacity: 0; }
+  }
+  .speaking { animation: pulse-ring 0.6s ease-out infinite alternate; }
+
+  #back-btn {
+    display: none;
+    margin: 2rem auto 0;
+    background: transparent;
+    border: 1.5px solid #ccc;
+    color: var(--muted);
+    padding: 0.55rem 1.2rem;
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.88rem;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  #back-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+  @media (max-width: 600px) {
+    #popup { width: 260px; }
+    #text-canvas { padding: 1.5rem 1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>מגלה <span>מילים</span></h1>
+  <p>לחץ על מילה בודדת, או סמן טקסט לפעולות נוספות</p>
+</header>
+
+<div id="input-section">
+  <div class="input-card">
+    <label for="user-text">הכנס את הטקסט שלך</label>
+    <textarea id="user-text" placeholder="הקלד או הדבק כאן כל טקסט שתרצה לחקור..."></textarea>
+    <div class="btn-row">
+      <button class="primary" onclick="showText()">הצג טקסט ←</button>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center">
+  <button id="back-btn" onclick="goBack()">← ערוך טקסט</button>
+</div>
+
+<div id="display-section">
+  <div class="display-meta">
+    <span>הטקסט שלך</span>
+    <div class="line"></div>
+  </div>
+  <div class="hint-bar">
+    <span>👆</span> לחץ על מילה בודדת &nbsp;·&nbsp; <span>✏️</span> גרור לסימון משפט
+  </div>
+  <div id="text-canvas"></div>
+</div>
+
+<!-- Single-word popup -->
+<div id="popup">
+  <button id="popup-close" onclick="closePopup()">✕</button>
+  <div class="popup-word" id="popup-word"></div>
+  <div class="popup-actions">
+    <button onclick="speakWord()" title="השמע">
+      <span class="act-icon" id="speak-icon">🔊</span>
+      השמע
+    </button>
+    <button onclick="defineWord()" title="פירוש">
+      <span class="act-icon">📖</span>
+      פירוש
+    </button>
+    <button onclick="copyWord()" title="העתק">
+      <span class="act-icon" id="copy-icon">📋</span>
+      העתק
+    </button>
+  </div>
+  <div id="def-area"></div>
+</div>
+
+<!-- Selection toolbar -->
+<div id="sel-toolbar">
+  <div class="sel-selected-text" id="sel-label"></div>
+  <div class="sel-actions">
+    <button onclick="speakSelection()"><span class="si">🔊</span>השמע</button>
+    <button onclick="defineSelection()"><span class="si">📖</span>פירוש</button>
+    <button onclick="copySelection()"><span class="si" id="sel-copy-icon">📋</span>העתק</button>
+    <button onclick="clearSelection()"><span class="si">✕</span>סגור</button>
+  </div>
+  <div id="sel-def-area"></div>
+</div>
+
+<script>
+  const synth = window.speechSynthesis;
+  let currentWord = '';
+  let activeEl = null;
+
+  // --- Selection state ---
+  let selStartIdx = -1;
+  let selEndIdx   = -1;
+  let isDragging  = false;
+  let allWords    = []; // flat array of .word elements
+
+  // =====================
+  //    SHOW TEXT
+  // =====================
+  function showText() {
+    const raw = document.getElementById('user-text').value.trim();
+    if (!raw) { alert('אנא הכנס טקסט תחילה.'); return; }
+
+    const canvas = document.getElementById('text-canvas');
+    canvas.innerHTML = tokenize(raw);
+
+    allWords = Array.from(canvas.querySelectorAll('.word'));
+    allWords.forEach((el, idx) => {
+      el.dataset.idx = idx;
+      el.addEventListener('mousedown', onWordMouseDown);
+      el.addEventListener('mousemove', onWordMouseMove);
+      el.addEventListener('mouseup', onWordMouseUp);
+      el.addEventListener('touchstart', onTouchStart, { passive: true });
+      el.addEventListener('touchmove', onTouchMove,  { passive: true });
+      el.addEventListener('touchend', onTouchEnd);
+    });
+
+    document.getElementById('input-section').style.display = 'none';
+    document.getElementById('display-section').style.display = 'block';
+    document.getElementById('back-btn').style.display = 'inline-block';
+  }
+
+  // =====================
+  //    TOKENIZE
+  // =====================
+  function tokenize(text) {
+    return text.split('\n').map(line => {
+      if (!line.trim()) return '<div class="text-line"><br></div>';
+      const tokens = line.split(/(\s+|[^\u05D0-\u05EAa-zA-Z0-9\u0600-\u06FFÀ-ÿ]+)/g);
+      const inner = tokens.map(token => {
+        if (!token) return '';
+        if (/^\s+$/.test(token)) return token;
+        if (/[\u05D0-\u05EAa-zA-Z0-9\u0600-\u06FFÀ-ÿ]/.test(token)) {
+          const clean = token.replace(/[^\u05D0-\u05EAa-zA-Z0-9\u0600-\u06FFÀ-ÿ'-]/g, '');
+          const rest  = token.slice(clean.length);
+          return `<span class="word" data-word="${esc(clean)}">${esc(clean)}</span><span class="punct">${esc(rest)}</span>`;
+        }
+        return `<span class="punct">${esc(token)}</span>`;
+      }).join('');
+      return `<div class="text-line">${inner}</div>`;
+    }).join('');
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // =====================
+  //  MOUSE DRAG SELECT
+  // =====================
+  let mouseDownIdx = -1;
+
+  function onWordMouseDown(e) {
+    // Start potential drag
+    mouseDownIdx = +this.dataset.idx;
+    isDragging = false;
+    clearHighlights();
+    closePopup();
+    closeSel();
+  }
+
+  function onWordMouseMove(e) {
+    if (mouseDownIdx < 0) return;
+    const curIdx = +this.dataset.idx;
+    if (curIdx !== mouseDownIdx) isDragging = true;
+    if (isDragging) {
+      const lo = Math.min(mouseDownIdx, curIdx);
+      const hi = Math.max(mouseDownIdx, curIdx);
+      highlightRange(lo, hi);
+    }
+  }
+
+  function onWordMouseUp(e) {
+    if (mouseDownIdx < 0) return;
+    const curIdx = +this.dataset.idx;
+
+    if (!isDragging && curIdx === mouseDownIdx) {
+      // Single click → word popup
+      openPopup(e, this);
+    } else {
+      // Drag → selection toolbar
+      const lo = Math.min(mouseDownIdx, curIdx);
+      const hi = Math.max(mouseDownIdx, curIdx);
+      selStartIdx = lo; selEndIdx = hi;
+      highlightRange(lo, hi);
+      showSelToolbar(lo, hi);
+    }
+    mouseDownIdx = -1;
+    isDragging = false;
+  }
+
+  // Touch support
+  let touchStartIdx = -1;
+  function onTouchStart(e) { touchStartIdx = +this.dataset.idx; isDragging = false; clearHighlights(); closePopup(); closeSel(); }
+  function onTouchMove(e) {
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (el && el.classList.contains('word')) {
+      const curIdx = +el.dataset.idx;
+      if (curIdx !== touchStartIdx) isDragging = true;
+      if (isDragging) {
+        const lo = Math.min(touchStartIdx, curIdx);
+        const hi = Math.max(touchStartIdx, curIdx);
+        highlightRange(lo, hi);
+      }
+    }
+  }
+  function onTouchEnd(e) {
+    const touch = e.changedTouches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const curIdx = el && el.classList.contains('word') ? +el.dataset.idx : touchStartIdx;
+    if (!isDragging) {
+      openPopup(e.changedTouches[0], allWords[touchStartIdx]);
+    } else {
+      const lo = Math.min(touchStartIdx, curIdx);
+      const hi = Math.max(touchStartIdx, curIdx);
+      selStartIdx = lo; selEndIdx = hi;
+      highlightRange(lo, hi);
+      showSelToolbar(lo, hi);
+    }
+    touchStartIdx = -1; isDragging = false;
+  }
+
+  // Highlight range
+  function highlightRange(lo, hi) {
+    allWords.forEach((el, i) => {
+      el.classList.remove('highlighted','sel-start','sel-end','sel-single','active');
+      if (i >= lo && i <= hi) {
+        el.classList.add('highlighted');
+        if (lo === hi) el.classList.add('sel-single');
+        else if (i === lo) el.classList.add('sel-start');
+        else if (i === hi) el.classList.add('sel-end');
+      }
+    });
+  }
+
+  function clearHighlights() {
+    allWords.forEach(el => el.classList.remove('highlighted','sel-start','sel-end','sel-single'));
+  }
+
+  // Get selected text
+  function getSelectedText() {
+    if (selStartIdx < 0) return '';
+    return allWords.slice(selStartIdx, selEndIdx + 1).map(el => el.dataset.word).join(' ');
+  }
+
+  // =====================
+  //  SELECTION TOOLBAR
+  // =====================
+  function showSelToolbar(lo, hi) {
+    const toolbar = document.getElementById('sel-toolbar');
+    const label   = document.getElementById('sel-label');
+    const text = getSelectedText();
+    label.textContent = text.length > 40 ? text.slice(0,38)+'…' : text;
+
+    document.getElementById('sel-def-area').style.display = 'none';
+    document.getElementById('sel-def-area').textContent = '';
+    document.getElementById('sel-copy-icon').textContent = '📋';
+
+    toolbar.style.display = 'block';
+
+    // Position above the start word
+    const refEl = allWords[lo];
+    const rect  = refEl.getBoundingClientRect();
+    const tw    = toolbar.offsetWidth;
+    const th    = toolbar.offsetHeight;
+
+    let left = rect.left + rect.width / 2 - tw / 2;
+    let top  = rect.top + window.scrollY - th - 14;
+
+    if (left < 8) left = 8;
+    if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
+    if (top < window.scrollY + 8) top = allWords[hi].getBoundingClientRect().bottom + window.scrollY + 14;
+
+    toolbar.style.left = left + 'px';
+    toolbar.style.top  = top  + 'px';
+  }
+
+  function closeSel() {
+    document.getElementById('sel-toolbar').style.display = 'none';
+    clearHighlights();
+    selStartIdx = selEndIdx = -1;
+  }
+
+  function clearSelection() { closeSel(); }
+
+  function speakSelection() {
+    const text = getSelectedText();
+    if (!text) return;
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = /[\u05D0-\u05EA]/.test(text) ? 'he-IL' : /[\u0600-\u06FF]/.test(text) ? 'ar' : 'en-US';
+    utter.rate = 0.85;
+    synth.speak(utter);
+  }
+
+  async function defineSelection() {
+    const text = getSelectedText();
+    if (!text) return;
+    const area = document.getElementById('sel-def-area');
+    area.style.display = 'block';
+    area.innerHTML = '<span class="spinner"></span> טוען הסבר...';
+
+    const isHebrew = /[\u05D0-\u05EA]/.test(text);
+    const prompt = isHebrew
+      ? `הסבר בקצרה את הביטוי / המשפט: "${text}". תן הסבר קצר ב-2-3 משפטים בעברית.`
+      : `תרגם לעברית את הביטוי האנגלי: "${text}". תן תרגום והסבר קצר של המשמעות. ענה בעברית בלבד.`;
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      const data = await resp.json();
+      const result = data.content?.map(b => b.text||'').join('') || 'לא נמצא הסבר.';
+      area.textContent = result;
+      // Re-position
+      if (selStartIdx >= 0) showSelToolbar(selStartIdx, selEndIdx);
+    } catch {
+      area.textContent = 'שגיאה. נסה שנית.';
+    }
+  }
+
+  function copySelection() {
+    const text = getSelectedText();
+    navigator.clipboard.writeText(text).then(() => {
+      const icon = document.getElementById('sel-copy-icon');
+      icon.textContent = '✅';
+      setTimeout(() => icon.textContent = '📋', 1500);
+    });
+  }
+
+  // =====================
+  //  SINGLE-WORD POPUP
+  // =====================
+  function openPopup(e, el) {
+    if (activeEl) activeEl.classList.remove('active');
+    activeEl = el;
+    el.classList.add('active');
+    currentWord = el.dataset.word;
+    document.getElementById('popup-word').textContent = currentWord;
+    document.getElementById('def-area').style.display = 'none';
+    document.getElementById('def-area').textContent = '';
+    document.getElementById('copy-icon').textContent = '📋';
+    positionPopup(el);
+    document.getElementById('popup').style.display = 'block';
+  }
+
+  function positionPopup(el) {
+    const popup = document.getElementById('popup');
+    popup.style.display = 'block';
+    const rect = el.getBoundingClientRect();
+    const pw = popup.offsetWidth, ph = popup.offsetHeight;
+    let left = rect.left + rect.width / 2 - pw / 2;
+    let top  = rect.top + window.scrollY - ph - 14;
+    if (left < 8) left = 8;
+    if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+    if (top < window.scrollY + 8) top = rect.bottom + window.scrollY + 14;
+    popup.style.left = left + 'px';
+    popup.style.top  = top  + 'px';
+  }
+
+  function closePopup() {
+    document.getElementById('popup').style.display = 'none';
+    if (activeEl) { activeEl.classList.remove('active'); activeEl = null; }
+    synth.cancel();
+  }
+
+  document.addEventListener('mousedown', e => {
+    const popup = document.getElementById('popup');
+    const toolbar = document.getElementById('sel-toolbar');
+    if (!popup.contains(e.target) && !e.target.classList.contains('word')) closePopup();
+    if (!toolbar.contains(e.target) && !e.target.classList.contains('word')) closeSel();
+  });
+
+  // ---- SPEAK single word ----
+  function speakWord() {
+    synth.cancel();
+    const utter = new SpeechSynthesisUtterance(currentWord);
+    utter.lang = /[\u05D0-\u05EA]/.test(currentWord) ? 'he-IL' : /[\u0600-\u06FF]/.test(currentWord) ? 'ar' : 'en-US';
+    utter.rate = 0.85;
+    const icon = document.getElementById('speak-icon');
+    icon.classList.add('speaking');
+    utter.onend = () => icon.classList.remove('speaking');
+    synth.speak(utter);
+  }
+
+  // ---- DEFINE single word ----
+  async function defineWord() {
+    const area = document.getElementById('def-area');
+    area.style.display = 'block';
+    area.className = 'loading';
+    area.innerHTML = '<span class="spinner"></span> טוען הסבר...';
+
+    const isHebrew = /[\u05D0-\u05EA]/.test(currentWord);
+    const prompt = isHebrew
+      ? `הסבר בקצרה את המילה "${currentWord}" בעברית. תן הגדרה קצרה (2-3 משפטים), את חלק הדיבור, ואם רלוונטי דוגמה קצרה. ענה בעברית בלבד.`
+      : `תרגם את המילה האנגלית "${currentWord}" לעברית. תן את התרגום, חלק הדיבור, והסבר קצר של המשמעות בעברית. ענה בעברית בלבד.`;
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      const data = await resp.json();
+      const text = data.content?.map(b => b.text||'').join('') || 'לא נמצא הסבר.';
+      area.className = '';
+      area.textContent = text;
+      if (activeEl) positionPopup(activeEl);
+    } catch {
+      area.className = '';
+      area.textContent = 'שגיאה. נסה שנית.';
+    }
+  }
+
+  // ---- COPY single word ----
+  function copyWord() {
+    navigator.clipboard.writeText(currentWord).then(() => {
+      const icon = document.getElementById('copy-icon');
+      icon.textContent = '✅';
+      setTimeout(() => icon.textContent = '📋', 1500);
+    });
+  }
+
+  // ---- BACK ----
+  function goBack() {
+    closePopup(); closeSel();
+    document.getElementById('display-section').style.display = 'none';
+    document.getElementById('back-btn').style.display = 'none';
+    document.getElementById('input-section').style.display = 'block';
+  }
+</script>
+</body>
+</html>
