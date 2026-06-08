@@ -248,6 +248,27 @@
   .dot-red { background: var(--accent3); }
   .dot-blue { background: var(--accent); }
 
+  /* כפתור החלפת כיוון למידה */
+  .btn-toggle-mode {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, var(--accent), var(--accent5));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Heebo', sans-serif;
+  }
+  .btn-toggle-mode:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(41, 112, 214, 0.2);
+  }
+
   .progress-wrap {
     background: var(--surface2);
     border-radius: 50px;
@@ -756,7 +777,13 @@
     <div class="stats-bar">
       <div class="stats-row">
         <button class="settings-trigger" style="position: absolute; right: 10px; top: -2px;" onclick="openSettingsModal()" title="הגדרות API">⚙️</button>
-        <div class="stat-chip" style="margin-right: 32px;">
+        
+        <!-- כפתור שינוי כיוון למידה -->
+        <button class="btn-toggle-mode" id="study-mode-btn" onclick="toggleStudyMode()">
+          <span>🔄 אנגלית ➔ עברית</span>
+        </button>
+
+        <div class="stat-chip" style="margin-right: 12px;">
           <div class="dot dot-green"></div>
           <span>יודע:</span>
           <strong id="count-know">0</strong>
@@ -917,7 +944,13 @@
       <div id="example-result-box" style="display: none;">
         <div class="example-content-area">
           <div class="example-en-text" id="popup-example-en">—</div>
-          <div class="example-he-text" id="popup-example-he">—</div>
+          
+          <!-- כפתור גילוי תרגום המשפט -->
+          <button id="popup-translate-btn" onclick="toggleExampleTranslation()" style="background: none; border: none; color: var(--accent); font-family: 'Heebo', sans-serif; font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 12px; margin-top: 8px; outline: none; padding: 4px 0;">
+            <span>👁️ הצג תרגום לעברית</span>
+          </button>
+          
+          <div class="example-he-text" id="popup-example-he" style="display: none;">—</div>
         </div>
       </div>
 
@@ -952,6 +985,7 @@ let dontKnowSet = new Set();
 let history = [];
 let meaningVisible = false;
 let isSavingMode = false;
+let studyMode = 'en_he'; // ברירת מחדל: אנגלית לעברית
 
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwfCp0uMjXU3yXKWb4-YbZC-BkMy8zpiNnPG0UyHKPxJ4Xbd9QDIxAIJBAhwNxO3LTk/exec';
 const apiKey = ""; // Gemini API Key (מטופל אוטומטית על ידי סביבת הריצה)
@@ -1030,6 +1064,25 @@ function startLearning(words) {
   renderWord();
 }
 
+// החלפת כיוון הלמידה
+function toggleStudyMode() {
+  studyMode = (studyMode === 'en_he') ? 'he_en' : 'en_he';
+  const btn = document.getElementById('study-mode-btn');
+  
+  if (studyMode === 'en_he') {
+    btn.innerHTML = '<span>🔄 אנגלית ➔ עברית</span>';
+    showToast('🔄 כיוון למידה: אנגלית ➔ עברית');
+  } else {
+    btn.innerHTML = '<span>🔄 עברית ➔ אנגלית</span>';
+    showToast('🔄 כיוון למידה: עברית ➔ אנגלית');
+  }
+  
+  // רינדור מחדש של המילה הנוכחית לפי הכיוון החדש
+  if (queue.length > 0) {
+    renderWord();
+  }
+}
+
 function renderWord() {
   if (currentIdx >= queue.length) {
     showSummary();
@@ -1037,10 +1090,39 @@ function renderWord() {
   }
 
   const wordObj = allWords[queue[currentIdx]];
-  document.getElementById('word-en').textContent = wordObj.en;
-  document.getElementById('word-he').textContent = wordObj.he;
+  let displayMain = wordObj.en;
+  let displaySub = wordObj.he;
+
+  // החלפת סדר התצוגה בהתאם למצב הלמידה
+  if (studyMode === 'he_en') {
+    displayMain = wordObj.he;
+    displaySub = wordObj.en;
+  }
+
+  const wordEnEl = document.getElementById('word-en');
+  const wordHeEl = document.getElementById('word-he');
+
+  wordEnEl.textContent = displayMain;
+  wordHeEl.textContent = displaySub;
   document.getElementById('word-counter').textContent =
     `מילה ${currentIdx + 1} מתוך ${queue.length}`;
+
+  // התאמת פונטים למילים בהתאם לשפה המוצגת
+  const hasHebrewMain = /[\u0590-\u05FF]/.test(displayMain);
+  if (hasHebrewMain) {
+    wordEnEl.style.fontFamily = "'Heebo', sans-serif";
+    wordEnEl.style.letterSpacing = "normal";
+  } else {
+    wordEnEl.style.fontFamily = "'Space Mono', monospace";
+    wordEnEl.style.letterSpacing = "-2px";
+  }
+
+  const hasHebrewSub = /[\u0590-\u05FF]/.test(displaySub);
+  if (hasHebrewSub) {
+    wordHeEl.style.fontFamily = "'Heebo', sans-serif";
+  } else {
+    wordHeEl.style.fontFamily = "'Space Mono', monospace";
+  }
 
   // Reset toggles
   hideMeaning();
@@ -1127,14 +1209,21 @@ function hideMeaning() {
 }
 
 function speakWord() {
-  const word = document.getElementById('word-en').textContent;
-  if (!word || word === '—') return;
-  const utter = new SpeechSynthesisUtterance(word);
+  const wordEn = document.getElementById('word-en').textContent;
+  const wordHe = document.getElementById('word-he').textContent;
+  
+  // אנחנו תמיד שואפים להקריא את הטקסט שאינו בעברית (כלומר את המילה באנגלית)
+  const hasHebrewEn = /[\u0590-\u05FF]/.test(wordEn);
+  const englishWord = hasHebrewEn ? wordHe : wordEn;
+
+  if (!englishWord || englishWord === '—') return;
+  
+  const utter = new SpeechSynthesisUtterance(englishWord);
   utter.lang = 'en-US';
   utter.rate = 0.9;
   speechSynthesis.cancel();
   speechSynthesis.speak(utter);
-  showToast('🔊 משמיע: ' + word);
+  showToast('🔊 משמיע: ' + englishWord);
 }
 
 // ── SETTINGS MODAL OPERATIONS ──
@@ -1342,6 +1431,20 @@ Example structure:
   }
 }
 
+// ── חשיפה והסתרה של תרגום המשפט בפופאפ ──
+function toggleExampleTranslation() {
+  const hebrewTextElement = document.getElementById('popup-example-he');
+  const btn = document.getElementById('popup-translate-btn');
+  
+  if (hebrewTextElement.style.display === 'none') {
+    hebrewTextElement.style.display = 'block';
+    btn.innerHTML = '<span>🙈 הסתר תרגום לעברית</span>';
+  } else {
+    hebrewTextElement.style.display = 'none';
+    btn.innerHTML = '<span>👁️ הצג תרגום לעברית</span>';
+  }
+}
+
 async function openExampleModal() {
   const wordEn = document.getElementById('word-en').textContent;
   const wordHe = document.getElementById('word-he').textContent;
@@ -1360,11 +1463,17 @@ async function openExampleModal() {
   const resultBox = document.getElementById('example-result-box');
   const errorBox = document.getElementById('example-error-box');
   const speakBtn = document.getElementById('popup-speak-btn');
+  const translateBtn = document.getElementById('popup-translate-btn');
 
   loadingBox.style.display = 'block';
   resultBox.style.display = 'none';
   errorBox.style.display = 'none';
   speakBtn.disabled = true;
+
+  // איפוס מצב תצוגת התרגום לעברית בכל פעם שהחלון נפתח מחדש
+  const hebrewTextElement = document.getElementById('popup-example-he');
+  hebrewTextElement.style.display = 'none';
+  translateBtn.innerHTML = '<span>👁️ הצג תרגום לעברית</span>';
 
   try {
     const data = await fetchGroundedExample(actualEnglish, actualHebrew);
