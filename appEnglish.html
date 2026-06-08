@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>לומד אנגלית</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface2: #e8edf3;
+    --border: #cdd5e0;
+    --accent: #2970d6;
+    --accent2: #1a9e3f;
+    --accent3: #d93025;
+    --accent4: #b45309;
+    --accent5: #7c3aed;
+    --text: #1a202c;
+    --text2: #4a5568;
+    --text3: #718096;
+    --radius: 14px;
+    --shadow: 0 4px 20px rgba(0,0,0,0.1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    direction: rtl;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(ellipse at 20% 20%, rgba(41,112,214,0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(124,58,237,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; }
+
+  /* ── SETUP SCREEN ── */
+  #setup-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+    gap: 32px;
+  }
+
+  .logo-area {
+    text-align: center;
+  }
+
+  .logo-icon {
+    font-size: 64px;
+    display: block;
+    margin-bottom: 12px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .logo-area h1 {
+    font-size: 2.4rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent5));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+  }
+
+  .logo-area p {
+    color: var(--text2);
+    font-size: 1rem;
+    margin-top: 6px;
+  }
+
+  .setup-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: var(--shadow);
+  }
+
+  .setup-card h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .input-group label {
+    font-size: 0.9rem;
+    color: var(--text2);
+    font-weight: 500;
+  }
+
+  .input-group input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    transition: border-color 0.2s;
+    direction: ltr;
+    text-align: left;
+  }
+
+  .input-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .input-group input::placeholder { color: var(--text3); }
+
+  .hint {
+    font-size: 0.78rem;
+    color: var(--text3);
+    line-height: 1.5;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent5));
+    border: none;
+    border-radius: var(--radius);
+    color: white;
+    font-family: 'Heebo', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+    margin-top: 8px;
+  }
+
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .demo-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    color: var(--text2);
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.9rem;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s, color 0.2s;
+    margin-top: 8px;
+  }
+
+  .demo-btn:hover { background: var(--border); color: var(--text); }
+
+  /* ── MAIN APP SCREEN ── */
+  #app-screen { display: none; min-height: 100vh; flex-direction: column; }
+
+  /* Stats bar */
+  .stats-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+
+  .stat-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .stat-chip .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .dot-green { background: var(--accent2); }
+  .dot-red { background: var(--accent3); }
+  .dot-blue { background: var(--accent); }
+
+  .progress-wrap {
+    background: var(--surface2);
+    border-radius: 50px;
+    height: 6px;
+    overflow: hidden;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent5));
+    border-radius: 50px;
+    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .progress-label {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  /* Main learning area */
+  .learning-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    gap: 24px;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  /* Word card */
+  .word-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 48px 40px;
+    text-align: center;
+    width: 100%;
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+    animation: cardIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .word-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent5));
+  }
+
+  .word-counter {
+    font-size: 0.78rem;
+    color: var(--text3);
+    margin-bottom: 16px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .word-en {
+    font-family: 'Space Mono', monospace;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 400px) {
+    .word-en { font-size: 2.2rem; }
+  }
+
+  .meaning-area {
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.3s ease;
+    max-height: 0;
+    opacity: 0;
+  }
+
+  .meaning-area.visible {
+    max-height: 120px;
+    opacity: 1;
+  }
+
+  .meaning-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 0 16px;
+  }
+
+  .word-he {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent5);
+  }
+
+  .example-area {
+    margin-top: 20px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 16px;
+    font-size: 0.9rem;
+    color: var(--text2);
+    line-height: 1.6;
+    text-align: left;
+    direction: ltr;
+    display: none;
+  }
+
+  .example-area.visible { display: block; }
+
+  .example-area .loading-dots {
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .loading-dots span {
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+  }
+
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+
+  /* Action buttons */
+  .actions-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 18px 12px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'Heebo', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .action-btn .emoji { font-size: 1.5rem; }
+
+  .action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .action-btn:active { transform: translateY(0); }
+
+  .btn-know {
+    background: rgba(26,158,63,0.1);
+    border-color: rgba(26,158,63,0.3);
+    color: var(--accent2);
+    grid-column: 1;
+  }
+
+  .btn-know:hover { background: rgba(26,158,63,0.18); border-color: var(--accent2); }
+
+  .btn-dontknow {
+    background: rgba(217,48,37,0.1);
+    border-color: rgba(217,48,37,0.3);
+    color: var(--accent3);
+    grid-column: 2;
+  }
+
+  .btn-dontknow:hover { background: rgba(217,48,37,0.18); border-color: var(--accent3); }
+
+  .btn-meaning {
+    background: rgba(124,58,237,0.1);
+    border-color: rgba(124,58,237,0.3);
+    color: var(--accent5);
+  }
+
+  .btn-meaning:hover { background: rgba(124,58,237,0.18); border-color: var(--accent5); }
+
+  .btn-sound {
+    background: rgba(41,112,214,0.1);
+    border-color: rgba(41,112,214,0.3);
+    color: var(--accent);
+  }
+
+  .btn-sound:hover { background: rgba(41,112,214,0.18); border-color: var(--accent); }
+
+  .btn-add {
+    background: rgba(26,158,63,0.08);
+    border-color: rgba(26,158,63,0.3);
+    color: var(--accent2);
+  }
+
+  .btn-add:hover { background: rgba(26,158,63,0.18); border-color: var(--accent2); }
+
+  /* עיצוב כפתור משפט לדוגמה */
+  .btn-example {
+    background: rgba(180,83,9,0.08);
+    border-color: rgba(180,83,9,0.3);
+    color: var(--accent4);
+  }
+
+  .btn-example:hover { background: rgba(180,83,9,0.18); border-color: var(--accent4); }
+
+  .btn-back {
+    background: var(--surface2);
+    border-color: var(--border);
+    color: var(--text2);
+    font-size: 0.85rem;
+  }
+
+  .btn-back:hover { background: var(--border); color: var(--text); }
+
+
+  /* ── SUMMARY SCREEN ── */
+  #summary-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+    gap: 24px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 36px;
+    width: 100%;
+    max-width: 480px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+
+  .summary-trophy { font-size: 72px; margin-bottom: 16px; animation: float 3s ease-in-out infinite; display: block; }
+
+  .summary-card h2 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+
+  .summary-card .sub { color: var(--text2); font-size: 0.95rem; margin-bottom: 28px; }
+
+  .summary-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .summary-stat {
+    background: var(--surface2);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+
+  .summary-stat .val {
+    font-size: 2.2rem;
+    font-weight: 900;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .summary-stat .lbl {
+    font-size: 0.8rem;
+    color: var(--text2);
+    margin-top: 4px;
+  }
+
+  .s-green .val { color: var(--accent2); }
+  .s-red .val { color: var(--accent3); }
+  .s-blue .val { color: var(--accent); }
+  .s-purple .val { color: var(--accent5); }
+
+  .summary-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .btn-secondary {
+    padding: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'Heebo', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { background: var(--border); }
+
+  /* ── ADD WORD MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: var(--shadow);
+    animation: cardIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .modal-card h3 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .modal-card .input-group { margin-bottom: 14px; }
+
+  .modal-card .input-group input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    width: 100%;
+    color: var(--text);
+    font-family: 'Heebo', sans-serif;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+  }
+
+  .modal-card .input-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .modal-actions .btn-primary { margin-top: 0; flex: 1; padding: 13px; font-size: 1rem; }
+
+  .btn-cancel {
+    flex: 1;
+    padding: 13px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: 'Heebo', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .btn-cancel:hover { background: var(--border); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 12px 24px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    box-shadow: var(--shadow);
+    z-index: 999;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── LOADING ── */
+  .loading-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    gap: 20px;
+    text-align: center;
+  }
+
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-screen p { color: var(--text2); font-size: 1rem; }
+
+  /* Ripple effect */
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.08);
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+    pointer-events: none;
+  }
+
+  @keyframes ripple {
+    to { transform: scale(4); opacity: 0; }
+  }
+
+  @media (max-width: 500px) {
+    .word-en { font-size: 2.4rem; }
+    .setup-card { padding: 24px 20px; }
+    .stats-row { gap: 6px; }
+    .stat-chip { font-size: 0.78rem; padding: 5px 10px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SETUP SCREEN -->
+  <div id="setup-screen">
+    <div class="logo-area">
+      <span class="logo-icon">📖</span>
+      <h1>לומד אנגלית</h1>
+      <p>שינון אוצר מילים חכם</p>
+    </div>
+
+    <div class="setup-card">
+      <h2>🚀 התחל ללמוד</h2>
+
+      <button class="btn-primary" id="connect-btn" onclick="connectSheets()">
+        📚 טען מילים מ-Google Sheets
+      </button>
+
+      <button class="demo-btn" onclick="loadDemo()">
+        🎓 נסה עם נתוני דמו
+      </button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="spinner"></div>
+    <p id="loading-text">טוען מילים מ-Google Sheets...</p>
+  </div>
+
+  <!-- APP SCREEN -->
+  <div id="app-screen">
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stats-row">
+        <div class="stat-chip">
+          <div class="dot dot-green"></div>
+          <span>יודע:</span>
+          <strong id="count-know">0</strong>
+        </div>
+        <div class="stat-chip">
+          <div class="dot dot-red"></div>
+          <span>לא יודע:</span>
+          <strong id="count-dontknow">0</strong>
+        </div>
+        <div class="stat-chip">
+          <div class="dot dot-blue"></div>
+          <span>נותרו:</span>
+          <strong id="count-remaining">0</strong>
+        </div>
+      </div>
+      <div class="progress-wrap">
+        <div class="progress-bar" id="progress-bar" style="width:0%"></div>
+      </div>
+      <div class="progress-label" id="progress-label">0%</div>
+    </div>
+
+    <!-- Learning Area -->
+    <div class="learning-area">
+      <div class="word-card" id="word-card">
+        <div class="word-counter" id="word-counter">מילה 1 מתוך 0</div>
+        <div class="word-en" id="word-en">—</div>
+
+        <div class="meaning-area" id="meaning-area">
+          <hr class="meaning-divider">
+          <div class="word-he" id="word-he"></div>
+        </div>
+
+        <div class="example-area" id="example-area"></div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="actions-grid">
+        <button class="action-btn btn-know" onclick="markKnow()">
+          <span class="emoji">✅</span>
+          <span>אני יודע</span>
+        </button>
+        <button class="action-btn btn-dontknow" onclick="markDontKnow()">
+          <span class="emoji">❌</span>
+          <span>אני לא יודע</span>
+        </button>
+        <button class="action-btn btn-meaning" onclick="toggleMeaning()">
+          <span class="emoji" id="meaning-emoji">📖</span>
+          <span id="meaning-btn-text">הצג פירוש</span>
+        </button>
+        <button class="action-btn btn-example" onclick="toggleExample()">
+          <span class="emoji">💡</span>
+          <span>משפט לדוגמה</span>
+        </button>
+        <button class="action-btn btn-sound" onclick="speakWord()">
+          <span class="emoji">🔊</span>
+          <span>השמע מילה</span>
+        </button>
+        <button class="action-btn btn-add" onclick="openAddModal()">
+          <span class="emoji">➕</span>
+          <span>הוסף מילה</span>
+        </button>
+        <button class="action-btn btn-back" onclick="goBack()">
+          <span class="emoji">↩️</span>
+          <span>חזור</span>
+        </button>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- SUMMARY SCREEN -->
+  <div id="summary-screen">
+    <div class="summary-card">
+      <span class="summary-trophy" id="summary-trophy">🏆</span>
+      <h2 id="summary-title">כל הכבוד!</h2>
+      <p class="sub">סיימת את סבב הלמידה</p>
+
+      <div class="summary-stats">
+        <div class="summary-stat s-blue">
+          <div class="val" id="sum-total">0</div>
+          <div class="lbl">סך הכל מילים</div>
+        </div>
+        <div class="summary-stat s-green">
+          <div class="val" id="sum-know">0</div>
+          <div class="lbl">ידועות</div>
+        </div>
+        <div class="summary-stat s-red">
+          <div class="val" id="sum-dontknow">0</div>
+          <div class="lbl">לא ידועות</div>
+        </div>
+        <div class="summary-stat s-purple">
+          <div class="val" id="sum-pct">0%</div>
+          <div class="lbl">אחוז הצלחה</div>
+        </div>
+      </div>
+
+      <div class="summary-btns">
+        <button class="btn-primary" onclick="restartAll()">🔄 התחל סבב חדש</button>
+        <button class="btn-secondary" id="study-unknown-btn" onclick="studyUnknown()">📚 למד רק מילים שאני לא יודע</button>
+        <button class="btn-secondary" onclick="goSetup()">⚙️ הגדרות</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD WORD MODAL -->
+  <div class="modal-overlay" id="add-modal" onclick="handleOverlayClick(event)">
+    <div class="modal-card">
+      <h3>➕ הוסף מילה חדשה</h3>
+      <div class="input-group">
+        <label>מילה באנגלית</label>
+        <input type="text" id="new-word-en" placeholder="e.g. Eloquent" dir="ltr" autocomplete="off">
+      </div>
+      <div class="input-group">
+        <label>פירוש בעברית</label>
+        <input type="text" id="new-word-he" placeholder="רהוט / ביטוי מרשים" autocomplete="off">
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeAddModal()">ביטול</button>
+        <button class="btn-primary" onclick="submitAddWord()">💾 שמור</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ── STATE ──
+let allWords = [];
+let queue = [];
+let currentIdx = 0;
+let knowSet = new Set();
+let dontKnowSet = new Set();
+let history = [];
+let meaningVisible = false;
+let exampleVisible = false;
+let isSavingMode = false;
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwfCp0uMjXU3yXKWb4-YbZC-BkMy8zpiNnPG0UyHKPxJ4Xbd9QDIxAIJBAhwNxO3LTk/exec';
+
+// ── DEMO DATA ──
+const DEMO_WORDS = [
+  {en: 'Darling', he: 'מתוקנת / יקירי'},
+  {en: 'Dive', he: 'לצלול'},
+  {en: 'Lead', he: 'להנהיג / עופרת'},
+  {en: 'Eloquent', he: 'רהוט / ביטוי מרשים'},
+  {en: 'Ambiguous', he: 'דו-משמעי / מעורפל'},
+  {en: 'Persevere', he: 'להתמיד / לעמוד בנסיון'},
+  {en: 'Inevitable', he: 'בלתי נמנע'},
+  {en: 'Pristine', he: 'בתולי / טהור'},
+  {en: 'Whimsical', he: 'שובבני / קפריזי'},
+  {en: 'Tranquil', he: 'שליו / שקט'},
+  {en: 'Resilient', he: 'גמיש / עמיד'},
+  {en: 'Ephemeral', he: 'חולף / זמני'},
+  {en: 'Abundance', he: 'שפע'},
+  {en: 'Diligent', he: 'חרוץ / שקדן'},
+  {en: 'Cherish', he: 'לאהוב / לשמור'},
+];
+
+// ── SETUP ──
+function loadDemo() {
+  allWords = [...DEMO_WORDS];
+  isSavingMode = false;
+  startLearning(allWords);
+  showToast('🎓 מצב דמו — לא יישמרו נתונים ל-Google Sheets');
+}
+
+async function connectSheets() {
+  const btn = document.getElementById('connect-btn');
+  btn.disabled = true;
+  showScreen('loading');
+  document.getElementById('loading-text').textContent = 'טוען מילים מ-Google Sheets...';
+
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=getWords`);
+    const data = await res.json();
+    if (!data.words || data.words.length === 0) throw new Error('לא נמצאו מילים בגיליון');
+    allWords = data.words;
+    isSavingMode = true;
+    startLearning(allWords);
+    showToast('✅ נטענו ' + allWords.length + ' מילים בהצלחה!');
+  } catch(err) {
+    showScreen('setup');
+    showToast('❌ שגיאה: ' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── LEARNING ──
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function startLearning(words) {
+  if (!words || words.length === 0) {
+    showToast('⚠️ לא נמצאו מילים ללמידה');
+    showScreen('setup');
+    return;
+  }
+  allWords = words;
+  queue = shuffle(words.map((_, i) => i));
+  currentIdx = 0;
+  knowSet.clear();
+  dontKnowSet.clear();
+  history = [];
+  showScreen('app');
+  renderWord();
+}
+
+function renderWord() {
+  if (currentIdx >= queue.length) {
+    showSummary();
+    return;
+  }
+
+  const wordObj = allWords[queue[currentIdx]];
+  document.getElementById('word-en').textContent = wordObj.en;
+  document.getElementById('word-he').textContent = wordObj.he;
+  document.getElementById('word-counter').textContent =
+    `מילה ${currentIdx + 1} מתוך ${queue.length}`;
+
+  // Reset toggles
+  hideMeaning();
+  hideExample();
+
+  // Update stats
+  updateStats();
+
+  // Card animation re-trigger
+  const card = document.getElementById('word-card');
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = '';
+}
+
+function updateStats() {
+  const total = queue.length;
+  const done = knowSet.size + dontKnowSet.size;
+  const remaining = total - done;
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+
+  document.getElementById('count-know').textContent = knowSet.size;
+  document.getElementById('count-dontknow').textContent = dontKnowSet.size;
+  document.getElementById('count-remaining').textContent = remaining;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = pct + '%';
+}
+
+function markKnow() {
+  const wi = queue[currentIdx];
+  history.push({ qIdx: currentIdx, wordIdx: wi, action: 'know' });
+  knowSet.add(wi);
+  dontKnowSet.delete(wi);
+  currentIdx++;
+  renderWord();
+}
+
+function markDontKnow() {
+  const wi = queue[currentIdx];
+  history.push({ qIdx: currentIdx, wordIdx: wi, action: 'dontknow' });
+  dontKnowSet.add(wi);
+  knowSet.delete(wi);
+  // Save to Google Sheets asynchronously
+  if (isSavingMode) saveUnknownWord(allWords[wi]);
+  currentIdx++;
+  renderWord();
+}
+
+function goBack() {
+  if (history.length === 0) { showToast('אין פעולה לביטול'); return; }
+  const last = history.pop();
+  currentIdx = last.qIdx;
+
+  if (last.action === 'know') knowSet.delete(last.wordIdx);
+  if (last.action === 'dontknow') {
+    dontKnowSet.delete(last.wordIdx);
+    if (isSavingMode) removeUnknownWord(allWords[last.wordIdx]);
+  }
+
+  renderWord();
+  showToast('↩️ חזרת למילה הקודמת');
+}
+
+// ── TOGGLES ──
+function toggleMeaning() {
+  meaningVisible = !meaningVisible;
+  const area = document.getElementById('meaning-area');
+  const btn = document.getElementById('meaning-btn-text');
+  const emoji = document.getElementById('meaning-emoji');
+
+  if (meaningVisible) {
+    area.classList.add('visible');
+    btn.textContent = 'הסתר פירוש';
+    emoji.textContent = '🙈';
+  } else {
+    hideMeaning();
+  }
+}
+
+function hideMeaning() {
+  meaningVisible = false;
+  document.getElementById('meaning-area').classList.remove('visible');
+  document.getElementById('meaning-btn-text').textContent = 'הצג פירוש';
+  document.getElementById('meaning-emoji').textContent = '📖';
+}
+
+function hideExample() {
+  exampleVisible = false;
+  const ea = document.getElementById('example-area');
+  ea.classList.remove('visible');
+  ea.innerHTML = '';
+}
+
+async function toggleExample() {
+  const ea = document.getElementById('example-area');
+  const word = document.getElementById('word-en').textContent;
+  
+  if (!word || word === '—') return;
+
+  if (exampleVisible) {
+    hideExample();
+    return;
+  }
+
+  exampleVisible = true;
+  ea.classList.add('visible');
+  ea.innerHTML = `
+    <div style="text-align: center; font-family: 'Heebo', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px;">
+      <span>מחפש משפט לדוגמה...</span>
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+    </div>
+  `;
+
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=getExample&word=${encodeURIComponent(word)}`);
+    const data = await res.json();
+    
+    if (data.sentence) {
+      ea.innerHTML = `<strong>Example:</strong><br>${data.sentence}`;
+    } else {
+      ea.innerHTML = `❌ לא נמצא משפט לדוגמה עבור מילה זו.`;
+    }
+  } catch (err) {
+    ea.innerHTML = `❌ שגיאה בחיפוש המשפט.`;
+    console.error(err);
+  }
+}
+
+function speakWord() {
+  const word = document.getElementById('word-en').textContent;
+  if (!word || word === '—') return;
+  const utter = new SpeechSynthesisUtterance(word);
+  utter.lang = 'en-US';
+  utter.rate = 0.9;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+  showToast('🔊 משמיע: ' + word);
+}
+
+// ── ADD WORD MODAL ──
+function openAddModal() {
+  document.getElementById('new-word-en').value = '';
+  document.getElementById('new-word-he').value = '';
+  document.getElementById('add-modal').classList.add('open');
+  setTimeout(() => document.getElementById('new-word-en').focus(), 100);
+}
+
+function closeAddModal() {
+  document.getElementById('add-modal').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('add-modal')) closeAddModal();
+}
+
+async function submitAddWord() {
+  const en = document.getElementById('new-word-en').value.trim();
+  const he = document.getElementById('new-word-he').value.trim();
+
+  if (!en || !he) {
+    showToast('⚠️ יש למלא גם מילה וגם פירוש');
+    return;
+  }
+
+  closeAddModal();
+
+  if (isSavingMode) {
+    try {
+      const url = `${APPS_SCRIPT_URL}?action=addUnknown&en=${encodeURIComponent(en)}&he=${encodeURIComponent(he)}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.status === 'exists') {
+        showToast('ℹ️ המילה כבר קיימת בגיליון');
+      } else {
+        showToast('✅ המילה "' + en + '" נוספה לגיליון!');
+      }
+    } catch(e) {
+      showToast('❌ שגיאה בשמירה לגיליון');
+    }
+  } else {
+    // Demo mode — add to local list only
+    allWords.push({ en, he });
+    showToast('✅ המילה "' + en + '" נוספה (מצב דמו — לא נשמר)');
+  }
+}
+
+
+
+// ── GOOGLE SHEETS SAVE ──
+async function saveUnknownWord(wordObj) {
+  if (!isSavingMode) return;
+  try {
+    const url = `${APPS_SCRIPT_URL}?action=addUnknown&en=${encodeURIComponent(wordObj.en)}&he=${encodeURIComponent(wordObj.he)}`;
+    await fetch(url);
+  } catch(e) {}
+}
+
+async function removeUnknownWord(wordObj) {
+  if (!isSavingMode) return;
+  try {
+    const url = `${APPS_SCRIPT_URL}?action=removeUnknown&en=${encodeURIComponent(wordObj.en)}`;
+    await fetch(url);
+    showToast('↩️ המילה הוסרה מהגיליון');
+  } catch(e) {}
+}
+
+// ── SUMMARY ──
+function showSummary() {
+  const total = queue.length;
+  const know = knowSet.size;
+  const dont = dontKnowSet.size;
+  const pct = total > 0 ? Math.round(know / total * 100) : 0;
+
+  document.getElementById('sum-total').textContent = total;
+  document.getElementById('sum-know').textContent = know;
+  document.getElementById('sum-dontknow').textContent = dont;
+  document.getElementById('sum-pct').textContent = pct + '%';
+
+  const trophy = pct >= 80 ? '🏆' : pct >= 50 ? '🎯' : '📚';
+  const title = pct >= 80 ? 'כל הכבוד!' : pct >= 50 ? 'התקדמות טובה!' : 'כדאי לתרגל!';
+  document.getElementById('summary-trophy').textContent = trophy;
+  document.getElementById('summary-title').textContent = title;
+
+  const unknownBtn = document.getElementById('study-unknown-btn');
+  unknownBtn.disabled = dont === 0;
+  unknownBtn.style.opacity = dont === 0 ? '0.4' : '1';
+
+  showScreen('summary');
+}
+
+function restartAll() {
+  startLearning(allWords);
+}
+
+function studyUnknown() {
+  const unknownWordsList = Array.from(dontKnowSet).map(i => allWords[i]);
+  if (unknownWordsList.length === 0) {
+    showToast('אין מילים שלא ידועות!');
+    return;
+  }
+  startLearning(unknownWordsList);
+}
+
+function goSetup() {
+  showScreen('setup');
+}
+
+// ── SCREENS ──
+function showScreen(name) {
+  document.getElementById('setup-screen').style.display = name === 'setup' ? 'flex' : 'none';
+  document.getElementById('loading-screen').style.display = name === 'loading' ? 'flex' : 'none';
+  document.getElementById('app-screen').style.display = name === 'app' ? 'flex' : 'none';
+  document.getElementById('summary-screen').style.display = name === 'summary' ? 'flex' : 'none';
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── RIPPLE ──
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.action-btn');
+  if (!btn) return;
+  const ripple = document.createElement('div');
+  ripple.className = 'ripple';
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height) * 2;
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (e.clientX - rect.left - size/2) + 'px';
+  ripple.style.top = (e.clientY - rect.top - size/2) + 'px';
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 700);
+});
+
+// Init
+showScreen('setup');
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeAddModal();
+  if (e.key === 'Enter' && document.getElementById('add-modal').classList.contains('open')) {
+    submitAddWord();
+  }
+});
+</script>
+</body>
+</html>
