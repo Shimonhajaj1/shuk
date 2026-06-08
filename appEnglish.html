@@ -100,6 +100,7 @@
     width: 100%;
     max-width: 480px;
     box-shadow: var(--shadow);
+    position: relative;
   }
 
   .setup-card h2 {
@@ -186,6 +187,22 @@
 
   .demo-btn:hover { background: var(--border); color: var(--text); }
 
+  .settings-trigger {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: none;
+    border: none;
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: transform 0.3s;
+    padding: 4px;
+  }
+
+  .settings-trigger:hover {
+    transform: rotate(45deg);
+  }
+
   /* ── MAIN APP SCREEN ── */
   #app-screen { display: none; min-height: 100vh; flex-direction: column; }
 
@@ -203,8 +220,10 @@
     display: flex;
     gap: 12px;
     justify-content: center;
+    align-items: center;
     flex-wrap: wrap;
     margin-bottom: 10px;
+    position: relative;
   }
 
   .stat-chip {
@@ -539,6 +558,7 @@
     max-width: 440px;
     box-shadow: var(--shadow);
     animation: cardIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
   }
 
   .modal-card h3 {
@@ -602,6 +622,8 @@
     background: var(--surface2);
     border-radius: var(--radius);
     border: 1px dashed var(--border);
+    max-height: 250px;
+    overflow-y: auto;
   }
 
   .example-en-text {
@@ -709,6 +731,7 @@
     </div>
 
     <div class="setup-card">
+      <button class="settings-trigger" onclick="openSettingsModal()" title="הגדרות API">⚙️</button>
       <h2>🚀 התחל ללמוד</h2>
 
       <button class="btn-primary" id="connect-btn" onclick="connectSheets()">
@@ -732,7 +755,8 @@
     <!-- Stats Bar -->
     <div class="stats-bar">
       <div class="stats-row">
-        <div class="stat-chip">
+        <button class="settings-trigger" style="position: absolute; right: 10px; top: -2px;" onclick="openSettingsModal()" title="הגדרות API">⚙️</button>
+        <div class="stat-chip" style="margin-right: 32px;">
           <div class="dot dot-green"></div>
           <span>יודע:</span>
           <strong id="count-know">0</strong>
@@ -853,22 +877,60 @@
     </div>
   </div>
 
+  <!-- SETTINGS MODAL -->
+  <div class="modal-overlay" id="settings-modal" onclick="handleSettingsOverlayClick(event)">
+    <div class="modal-card">
+      <h3>⚙️ הגדרות מפתח API של Gemini</h3>
+      <p style="font-size: 0.85rem; color: var(--text2); margin-bottom: 16px; line-height: 1.5;">
+        אם אתה מריץ את האפליקציה במחשב שלך באופן מקומי, עליך להזין מפתח API כדי לאפשר חיפוש משפטים חכם.
+      </p>
+      <div class="input-group">
+        <label>מפתח API של Google Gemini</label>
+        <input type="password" id="settings-api-key" placeholder="הדבק את מפתח ה-API כאן (AIzaSy...)" dir="ltr" autocomplete="off">
+      </div>
+      <p style="font-size: 0.78rem; color: var(--text3); margin-bottom: 16px; line-height: 1.4;">
+        💡 ניתן להנפיק מפתח בחינם לגמרי תוך 10 שניות בכתובת:
+        <br>
+        <a href="https://aistudio.google.com/" target="_blank" style="color: var(--accent); text-decoration: underline; font-weight: 500;">Google AI Studio</a>
+      </p>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeSettingsModal()">סגור</button>
+        <button class="btn-primary" onclick="saveSettingsKey()">💾 שמור מפתח</button>
+      </div>
+    </div>
+  </div>
+
   <!-- EXAMPLE POPUP MODAL -->
   <div class="modal-overlay" id="example-modal" onclick="handleExampleOverlayClick(event)">
     <div class="modal-card">
       <h3 style="color: var(--accent4);">💡 משפט לדוגמה</h3>
+      
+      <!-- Loading Box -->
       <div class="example-content-area" id="example-loading-box">
         <div style="text-align: center; font-family: 'Heebo', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; direction: rtl;">
-          <span>מחפש משפט לדוגמה באינטרנט...</span>
+          <span>מחפש משפט לדוגמה...</span>
           <div class="loading-dots"><span></span><span></span><span></span></div>
         </div>
       </div>
+
+      <!-- Result Box -->
       <div id="example-result-box" style="display: none;">
         <div class="example-content-area">
           <div class="example-en-text" id="popup-example-en">—</div>
           <div class="example-he-text" id="popup-example-he">—</div>
         </div>
       </div>
+
+      <!-- Error Helper Box -->
+      <div id="example-error-box" style="display: none; padding: 16px; background: rgba(217,48,37,0.06); border: 1px solid rgba(217,48,37,0.2); border-radius: var(--radius); margin-top: 12px; font-size: 0.88rem; line-height: 1.5; color: var(--text2);">
+        <strong style="color: var(--accent3); display: block; margin-bottom: 6px;">❌ שגיאה בגישה ל-Gemini API (403)</strong>
+        נראה שאתה מפעיל את האפליקציה באופן מקומי בדפדפן. לפתרון מהיר:
+        <ol style="margin-right: 20px; margin-top: 6px; font-size: 0.82rem;">
+          <li>לחץ על סמל גלגל השיניים ⚙️ בראש המסך.</li>
+          <li>הזן מפתח API אישי בחינם מ-Google AI Studio.</li>
+        </ol>
+      </div>
+
       <div class="example-modal-footer">
         <button class="btn-cancel" onclick="closeExampleModal()">סגור</button>
         <button class="btn-primary" id="popup-speak-btn" onclick="speakExampleSentence()" style="background: linear-gradient(135deg, var(--accent), var(--accent2));" disabled>🔊 השמע</button>
@@ -1075,9 +1137,84 @@ function speakWord() {
   showToast('🔊 משמיע: ' + word);
 }
 
+// ── SETTINGS MODAL OPERATIONS ──
+function openSettingsModal() {
+  const savedKey = localStorage.getItem('user_gemini_api_key') || "";
+  document.getElementById('settings-api-key').value = savedKey;
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function closeSettingsModal() {
+  document.getElementById('settings-modal').classList.remove('open');
+}
+
+function handleSettingsOverlayClick(e) {
+  if (e.target === document.getElementById('settings-modal')) closeSettingsModal();
+}
+
+function saveSettingsKey() {
+  const inputKey = document.getElementById('settings-api-key').value.trim();
+  localStorage.setItem('user_gemini_api_key', inputKey);
+  closeSettingsModal();
+  showToast(inputKey ? '✅ מפתח ה-API נשמר בדפדפן בהצלחה!' : '🗑️ מפתח ה-API הוסר בהצלחה!');
+}
+
+// ── FALLBACK NO-KEY DICTIONARY FETCH ──
+async function fetchFallbackDictionaryExample(wordEn, wordHe) {
+  // קריאה ל-API מילוני ציבורי חינמי ללא צורך במפתח
+  const dictUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(wordEn.trim())}`;
+  const res = await fetch(dictUrl);
+  if (!res.ok) throw new Error("Dictionary API not available");
+  
+  const data = await res.json();
+  if (!data || data.length === 0) throw new Error("No definitions found");
+
+  let foundExample = "";
+  // חיפוש דוגמה ראשונה קיימת במבנה הנתונים
+  for (const entry of data) {
+    if (!entry.meanings) continue;
+    for (const meaning of entry.meanings) {
+      if (!meaning.definitions) continue;
+      for (const def of meaning.definitions) {
+        if (def.example) {
+          foundExample = def.example;
+          break;
+        }
+      }
+      if (foundExample) break;
+    }
+    if (foundExample) break;
+  }
+
+  if (!foundExample) {
+    // אם אין דוגמה, ניצור משפט פשוט מקומי מבוסס על הגדרה
+    let definition = "definition";
+    try {
+      definition = data[0].meanings[0].definitions[0].definition;
+    } catch(e) {}
+    foundExample = `This is a sentence containing the word: "${wordEn}".`;
+  }
+
+  // תרגום פשוט לעברית
+  return {
+    english: foundExample,
+    hebrew: `[מצב גיבוי] המילה "${wordEn}" פירושה "${wordHe}".`
+  };
+}
+
 // ── EXAMPLES WITH GEMINI + GROUNDED SEARCH ──
 async function fetchGroundedExample(wordEn, wordHe) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+  // קבלת מפתח ה-API: עדיפות למפתח השמור מקומית, ואז למפתח הפלטפורמה
+  const userSavedKey = localStorage.getItem('user_gemini_api_key') || "";
+  const finalApiKey = userSavedKey || apiKey;
+
+  if (!finalApiKey) {
+    // אין מפתח בכלל - קריאה לגיבוי המילוני הציבורי ישירות
+    console.log("No API Key configured. Calling free dictionary API fallback...");
+    return await fetchFallbackDictionaryExample(wordEn, wordHe);
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${finalApiKey}`;
   
   const systemPrompt = "You are an expert bilingual English-Hebrew compiler. Your task is to find and provide a natural, clean, simple English example sentence that showcases the word. Use Google Search grounding to make sure the sentence is real, idiomatic, and directly aligns with the provided Hebrew translation meaning.";
   
@@ -1114,6 +1251,9 @@ Example structure:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      if (res.status === 403) {
+        throw new Error("API_KEY_FORBIDDEN");
+      }
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const data = await res.json();
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -1122,6 +1262,9 @@ Example structure:
       }
       throw new Error("No payload found");
     } catch (e) {
+      if (e.message === "API_KEY_FORBIDDEN") {
+        throw e; // אל תבצע ניסיונות חוזרים אם המפתח חסום
+      }
       if (i === 4) throw e;
       await new Promise(resolve => setTimeout(resolve, delay));
       delay *= 2;
@@ -1135,16 +1278,17 @@ async function openExampleModal() {
 
   if (!wordEn || wordEn === '—') return;
 
-  // Open the modal and set state to loading
   const modal = document.getElementById('example-modal');
   modal.classList.add('open');
 
   const loadingBox = document.getElementById('example-loading-box');
   const resultBox = document.getElementById('example-result-box');
+  const errorBox = document.getElementById('example-error-box');
   const speakBtn = document.getElementById('popup-speak-btn');
 
   loadingBox.style.display = 'block';
   resultBox.style.display = 'none';
+  errorBox.style.display = 'none';
   speakBtn.disabled = true;
 
   try {
@@ -1157,12 +1301,38 @@ async function openExampleModal() {
     resultBox.style.display = 'block';
     speakBtn.disabled = false;
   } catch (err) {
-    console.error(err);
-    loadingBox.innerHTML = `
-      <div style="text-align: center; color: var(--accent3); font-weight: 500;">
-        ❌ לא הצלחנו למצוא משפט לדוגמה ברשת. אנא נסה שנית.
-      </div>
-    `;
+    console.error("Failed fetching example:", err);
+    loadingBox.style.display = 'none';
+
+    if (err.message === "API_KEY_FORBIDDEN") {
+      // הצגת מנגנון העזרה לבעיית מפתח ה-API (403)
+      errorBox.style.display = 'block';
+      
+      // ניסיון לעבור אוטומטית לגיבוי המילוני בחירום כדי לתת בכל זאת תוצאה
+      try {
+        const backupData = await fetchFallbackDictionaryExample(wordEn, wordHe);
+        document.getElementById('popup-example-en').textContent = backupData.english;
+        document.getElementById('popup-example-he').textContent = backupData.hebrew + " (גיבוי מילוני מקומי)";
+        resultBox.style.display = 'block';
+        speakBtn.disabled = false;
+      } catch(backupErr) {}
+    } else {
+      // שגיאה כללית אחרת - מעבר אוטומטי למילון
+      try {
+        const backupData = await fetchFallbackDictionaryExample(wordEn, wordHe);
+        document.getElementById('popup-example-en').textContent = backupData.english;
+        document.getElementById('popup-example-he').textContent = backupData.hebrew + " (גיבוי)";
+        resultBox.style.display = 'block';
+        speakBtn.disabled = false;
+      } catch(backupErr) {
+        loadingBox.style.display = 'block';
+        loadingBox.innerHTML = `
+          <div style="text-align: center; color: var(--accent3); font-weight: 500;">
+            ❌ לא הצלחנו למצוא משפט לדוגמה ברשת. אנא נסה שנית.
+          </div>
+        `;
+      }
+    }
   }
 }
 
@@ -1328,6 +1498,7 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
     closeAddModal();
     closeExampleModal();
+    closeSettingsModal();
   }
   if (e.key === 'Enter' && document.getElementById('add-modal').classList.contains('open')) {
     submitAddWord();
