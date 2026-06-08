@@ -923,11 +923,11 @@
 
       <!-- Error Helper Box -->
       <div id="example-error-box" style="display: none; padding: 16px; background: rgba(217,48,37,0.06); border: 1px solid rgba(217,48,37,0.2); border-radius: var(--radius); margin-top: 12px; font-size: 0.88rem; line-height: 1.5; color: var(--text2);">
-        <strong style="color: var(--accent3); display: block; margin-bottom: 6px;">❌ שגיאה בגישה ל-Gemini API (403)</strong>
-        נראה שאתה מפעיל את האפליקציה באופן מקומי בדפדפן. לפתרון מהיר:
+        <strong style="color: var(--accent3); display: block; margin-bottom: 6px;">💡 הערה לגבי Gemini API</strong>
+        האפליקציה פועלת במצב חירום מקומי ללא שגיאות. לתוצאות חכמות ומשפטים מותאמים אישית באינטרנט:
         <ol style="margin-right: 20px; margin-top: 6px; font-size: 0.82rem;">
           <li>לחץ על סמל גלגל השיניים ⚙️ בראש המסך.</li>
-          <li>הזן מפתח API אישי בחינם מ-Google AI Studio.</li>
+          <li>הדבק מפתח Gemini API אישי בחינם.</li>
         </ol>
       </div>
 
@@ -1159,12 +1159,66 @@ function saveSettingsKey() {
   showToast(inputKey ? '✅ מפתח ה-API נשמר בדפדפן בהצלחה!' : '🗑️ מפתח ה-API הוסר בהצלחה!');
 }
 
+// ── ניקוי מילה חכם לחיפושים (Sanitize Word) ──
+function cleanEnglishWord(rawWord) {
+  if (!rawWord) return "";
+  
+  // 1. הסרת תגיות והסברים בסוגריים, לדוגמה: (בעבר) או (noun)
+  let clean = rawWord.replace(/\([^)]*\)/g, "");
+  
+  // 2. הסרת תווים בעברית אם נכנסו בטעות לעמודת האנגלית
+  clean = clean.replace(/[\u0590-\u05FF]/g, "");
+  
+  // 3. אם מופיעה תוספת של to בתחילת פועל (למשל to see), ננקה את ה-to כדי לחפש את המילה עצמה
+  clean = clean.trim();
+  if (clean.toLowerCase().startsWith("to ")) {
+    clean = clean.substring(3);
+  }
+  
+  // 4. הסרת פסיקים, נקודות וסימני פיסוק אחרים וסינון רווחים כפולים
+  clean = clean.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
+  clean = clean.replace(/\s{2,}/g, " ");
+  
+  return clean.trim();
+}
+
+// ── מנגנון יצירת משפט מקומי חסין שגיאות (Local Generation Fallback) ──
+function getLocalFallbackExample(wordEn, wordHe) {
+  const cleanEn = cleanEnglishWord(wordEn);
+  const cleanHe = wordHe.split('/')[0].split('(')[0].trim(); // לוקח רק את הפירוש הראשי הנקי בעברית
+
+  const templates = [
+    {
+      en: `I want to understand the meaning of the word "${cleanEn}".`,
+      he: `אני רוצה להבין את המשמעות של המילה "${cleanHe}".`
+    },
+    {
+      en: `Can you show me a clear example using "${cleanEn}"?`,
+      he: `תוכל להראות לי דוגמה ברורה שמשתמשת ב"${cleanHe}"?`
+    },
+    {
+      en: `Learning how to use the word "${cleanEn}" is very useful.`,
+      he: `ללמוד איך להשתמש במילה "${cleanHe}" זה מאוד שימושי.`
+    },
+    {
+      en: `She explained the concept of "${cleanEn}" perfectly.`,
+      he: `היא הסבירה את המושג של "${cleanHe}" בצורה מושלמת.`
+    }
+  ];
+
+  // בחירת תבנית משפט רנדומלית כדי שיהיה מעניין
+  const randomIndex = Math.floor(Math.random() * templates.length);
+  return templates[randomIndex];
+}
+
 // ── FALLBACK NO-KEY DICTIONARY FETCH ──
 async function fetchFallbackDictionaryExample(wordEn, wordHe) {
-  // קריאה ל-API מילוני ציבורי חינמי ללא צורך במפתח
-  const dictUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(wordEn.trim())}`;
+  const cleanEn = cleanEnglishWord(wordEn);
+  if (!cleanEn) throw new Error("Empty English word after sanitize");
+
+  const dictUrl = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(cleanEn)}`;
   const res = await fetch(dictUrl);
-  if (!res.ok) throw new Error("Dictionary API not available");
+  if (!res.ok) throw new Error("Dictionary API not available (404/500)");
   
   const data = await res.json();
   if (!data || data.length === 0) throw new Error("No definitions found");
@@ -1187,38 +1241,51 @@ async function fetchFallbackDictionaryExample(wordEn, wordHe) {
   }
 
   if (!foundExample) {
-    // אם אין דוגמה, ניצור משפט פשוט מקומי מבוסס על הגדרה
-    let definition = "definition";
+    // אם אין משפט מוכן במילון, נבנה משפט מבוסס הגדרה
+    let definition = "";
     try {
       definition = data[0].meanings[0].definitions[0].definition;
     } catch(e) {}
-    foundExample = `This is a sentence containing the word: "${wordEn}".`;
+    if (definition) {
+      foundExample = `Definition of ${cleanEn}: ${definition}`;
+    } else {
+      throw new Error("No definitions or examples found");
+    }
   }
 
-  // תרגום פשוט לעברית
+  const cleanHe = wordHe.split('/')[0].split('(')[0].trim();
   return {
     english: foundExample,
-    hebrew: `[מצב גיבוי] המילה "${wordEn}" פירושה "${wordHe}".`
+    hebrew: `המילה "${cleanEn}" פירושה בעברית: ${cleanHe}`
   };
 }
 
 // ── EXAMPLES WITH GEMINI + GROUNDED SEARCH ──
 async function fetchGroundedExample(wordEn, wordHe) {
+  const cleanEn = cleanEnglishWord(wordEn);
+  if (!cleanEn) {
+    return getLocalFallbackExample(wordEn, wordHe);
+  }
+
   // קבלת מפתח ה-API: עדיפות למפתח השמור מקומית, ואז למפתח הפלטפורמה
   const userSavedKey = localStorage.getItem('user_gemini_api_key') || "";
   const finalApiKey = userSavedKey || apiKey;
 
   if (!finalApiKey) {
-    // אין מפתח בכלל - קריאה לגיבוי המילוני הציבורי ישירות
-    console.log("No API Key configured. Calling free dictionary API fallback...");
-    return await fetchFallbackDictionaryExample(wordEn, wordHe);
+    // אין מפתח בכלל - קודם ננסה מילון ציבורי, אם ייכשל נעבור למנגנון הלוקאלי המובטח
+    try {
+      return await fetchFallbackDictionaryExample(wordEn, wordHe);
+    } catch (e) {
+      console.log("Dictionary API failed, using smart local fallback generator...");
+      return getLocalFallbackExample(wordEn, wordHe);
+    }
   }
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${finalApiKey}`;
   
   const systemPrompt = "You are an expert bilingual English-Hebrew compiler. Your task is to find and provide a natural, clean, simple English example sentence that showcases the word. Use Google Search grounding to make sure the sentence is real, idiomatic, and directly aligns with the provided Hebrew translation meaning.";
   
-  const userQuery = `Find a single realistic English example sentence using the word "${wordEn}", where its meaning corresponds to "${wordHe}".
+  const userQuery = `Find a single realistic English example sentence using the word "${cleanEn}", where its meaning corresponds to "${wordHe}".
 Provide the response in structured JSON format.
 Example structure:
 {
@@ -1244,7 +1311,7 @@ Example structure:
   };
 
   let delay = 1000;
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 3; i++) {
     try {
       const res = await fetch(url, {
         method: 'POST',
@@ -1263,9 +1330,9 @@ Example structure:
       throw new Error("No payload found");
     } catch (e) {
       if (e.message === "API_KEY_FORBIDDEN") {
-        throw e; // אל תבצע ניסיונות חוזרים אם המפתח חסום
+        throw e;
       }
-      if (i === 4) throw e;
+      if (i === 2) throw e;
       await new Promise(resolve => setTimeout(resolve, delay));
       delay *= 2;
     }
@@ -1301,37 +1368,20 @@ async function openExampleModal() {
     resultBox.style.display = 'block';
     speakBtn.disabled = false;
   } catch (err) {
-    console.error("Failed fetching example:", err);
+    console.warn("Primary fetch failed, loading fallback mechanisms...", err);
+    
+    // במידה וגם המילון וגם Gemini נכשלו לגמרי, נפעיל מיד את התבניות הלוקאליות שלנו שאינן תלויות ברשת!
+    const localData = getLocalFallbackExample(wordEn, wordHe);
+    
+    document.getElementById('popup-example-en').textContent = localData.english;
+    document.getElementById('popup-example-he').textContent = localData.hebrew + " (משפט מקומי)";
+    
     loadingBox.style.display = 'none';
+    resultBox.style.display = 'block';
+    speakBtn.disabled = false;
 
-    if (err.message === "API_KEY_FORBIDDEN") {
-      // הצגת מנגנון העזרה לבעיית מפתח ה-API (403)
+    if (err.message === "API_KEY_FORBIDDEN" || err.status === 403) {
       errorBox.style.display = 'block';
-      
-      // ניסיון לעבור אוטומטית לגיבוי המילוני בחירום כדי לתת בכל זאת תוצאה
-      try {
-        const backupData = await fetchFallbackDictionaryExample(wordEn, wordHe);
-        document.getElementById('popup-example-en').textContent = backupData.english;
-        document.getElementById('popup-example-he').textContent = backupData.hebrew + " (גיבוי מילוני מקומי)";
-        resultBox.style.display = 'block';
-        speakBtn.disabled = false;
-      } catch(backupErr) {}
-    } else {
-      // שגיאה כללית אחרת - מעבר אוטומטי למילון
-      try {
-        const backupData = await fetchFallbackDictionaryExample(wordEn, wordHe);
-        document.getElementById('popup-example-en').textContent = backupData.english;
-        document.getElementById('popup-example-he').textContent = backupData.hebrew + " (גיבוי)";
-        resultBox.style.display = 'block';
-        speakBtn.disabled = false;
-      } catch(backupErr) {
-        loadingBox.style.display = 'block';
-        loadingBox.innerHTML = `
-          <div style="text-align: center; color: var(--accent3); font-weight: 500;">
-            ❌ לא הצלחנו למצוא משפט לדוגמה ברשת. אנא נסה שנית.
-          </div>
-        `;
-      }
     }
   }
 }
